@@ -1,0 +1,62 @@
+#================================== Configure Splunk Indexer Setup on Amazon Linux Machine ========#
+#============================================[Splunk not recommended root user] ===================#
+
+
+$ sudo yum update && yum upgrade -y
+$ cd /opt
+
+$ sudo wget -O splunk-8.1.1-08187535c166-Linux-x86_64.tgz 'https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=8.1.1&product=splunk&filename=splunk-8.1.1-08187535c166-Linux-x86_64.tgz&wget=true'
+
+$ sudo tar -xvzf splunk-8.1.1-08187535c166-Linux-x86_64
+$ cd /opt/splunk/bin
+$ sudo ./splunk start --accept-license
+$ sudo ./splunk enable boot-start
+
+[Note : After configure splunk indexer, go to settings --> forwarding and receiving --> Receive data --> mention port 9997 ]
+
+
+
+
+
+#===================================== Configure Splunk Universal Forwarder for Remote Data Collection =======#
+#=============================================================================================================#
+
+
+[reference link : https://www.splunk.com/en_us/download/universal-forwarder.html]
+
+
+$ sudo yum update && yum upgrade -y
+$ cd /opt
+
+$ sudo wget -O splunkforwarder-8.1.1-08187535c166-Linux-x86_64.tgz 'https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=8.1.1&product=universalforwarder&filename=splunkforwarder-8.1.1-08187535c166-Linux-x86_64.tgz&wget=true'
+
+$ sudo tar -xvzf splunkforwarder-8.1.1-08187535c166-Linux-x86_64
+$ cd /opt/splunkforwarder/bin
+$ sudo ./splunk start --accept-license
+$ sudo ./splunk enable boot-start
+$ sudo ./splunk add forward-server <splunk server ip>:9997
+$ cd /var/log
+$ cd /opt/splunkforwarder/etc/system/local/
+$ sudo nano inputs.conf
+
+[monitor://var/log/]
+
+$ cd /opt/splunkforwarder/bin
+$ sudo ./splunk restart
+--------------------------------------------------------------------
+
+
+
+#=================  [Splunk Search Technique ]  ==================#
+
+source="/var/log/messages"
+source="/var/log/messages" OR source="/var/log/secure"
+source="/var/log/messages" AND sourcetype=syslog
+index=main
+
+#================  [ Generate Alert ] ============#
+
+index=_audit action="login attempt" info="failed"
+
+index=_audit action="login attempt" info="failed" | stats count
+
